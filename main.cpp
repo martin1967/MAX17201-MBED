@@ -1,30 +1,26 @@
-#include "mbed.h"
-#include "MCP4561.h"
-#define WIPER_0_VOLATILE 00								//MCP4561, MCP4562 exactly (IT IS WORK IN MY PROJECT)
-#define WIPER_1_VOLATILE 01								//  (Dual Resistor Network devices only)
-#define WIPER_0_NON_VOLATILE 02
-#define WIPER_1_NON_VOLATILE 03
-
-DigitalOut g_LED(LED1);									 // For Toggle 
-Serial pc(USBTX, USBRX); // tx, rx
-MCP4561 digiPot(46<< 1);								//declare an instance of MAX4561 with Device addr 46 ( 0101 1100 ), A0 pulled to LOW 
-														//if A0 pulled to HIGH Device addr is 47
-
+#include <mbed.h>
+#include "max1720x.h"
+const int MAX1720X_ADDR = 0x36;
+DigitalOut g_LED(LED4);
+max1720x FuelGauge( MAX1720X_ADDR << 1);
 
 int main() 
 {
-	uint16_t setOutput=1;								//Variable to set resistance
-	//uint16_t read;
-	while (1)
+	FuelGauge.HWreset();
+	wait(0.5);
+	FuelGauge.init();
+	uint16_t reset = FuelGauge.reset();
+	
+	wait(0.5);
+	for (;;)
 	{
-			digiPot.write(WIPER_0_VOLATILE, setOutput); //  method/function to set resistance
-			uint16_t x=digiPot.read(00);				//  method/function to read resistance
-			pc.printf("Resistance= %d \r\n", x);		// print to USB Serial
-			//Toggle show circuit work
-			g_LED = 1;
-			wait_ms(500);
-			g_LED = 0;
-			wait_ms(500);
+		float t = FuelGauge.getTemperature();
+		float c = FuelGauge.getCapacity();
+		float colu = FuelGauge.getCapacity_coulomb();
+		float i = FuelGauge.getCurrent();
+		float v = FuelGauge.getVoltage();
+		uint16_t  t1 = FuelGauge.getTime();
+		g_LED = !g_LED;
+		wait(0.5);
 	}
 }
-
